@@ -7,29 +7,7 @@
 [![TailwindCSS](https://img.shields.io/badge/TailwindCSS-v3.4-38B2AC.svg)](https://tailwindcss.com/)
 [![Pytest](https://img.shields.io/badge/Tests-10%2F10%20Passing-success.svg)](https://docs.pytest.org/)
 
-**FinPay** is a campus digital payment and wallet system. Students make real-time payments across campus merchants (Canteen, Stationery, Transit, Hostel, and Online), earn automated cashback calculated strictly using **integer-paise deterministic floor arithmetic**, enjoy wallet tier multipliers (`BASIC`, `PRIME`, `PREMIUM`), and benefit from **payment idempotency** and **monthly cashback limits**.
-
----
-
-## 📸 Screenshots Showcase
-
-### 1. Student Wallet Dashboard & Live Payment Portal
-![Student Dashboard](docs/screenshots/dashboard.png)
-
-### 2. Real-Time Monthly Category Cashback Limits
-![Monthly Cashback Limits](docs/screenshots/monthly_caps.png)
-
-### 3. Merchant Point-of-Sale Terminal
-![Merchant Terminal](docs/screenshots/merchant_terminal.png)
-
-### 4. Monthly Reconciliation & Balance Integrity Ledger
-![Reconciliation Dashboard](docs/screenshots/reconciliation.png)
-
-### 5. Interactive Specification Test Runner
-![Test Runner](docs/screenshots/test_runner.png)
-
-### 6. Interactive Swagger API Documentation
-![API Docs](docs/screenshots/api_docs.png)
+**FinPay** is a campus digital payment and wallet web application. Students make real-time payments across campus merchants (Canteen, Stationery, Transit, Hostel, and Online), earn automated cashback calculated strictly using **integer-paise deterministic floor arithmetic**, enjoy wallet tier multipliers (`BASIC`, `PRIME`, `PREMIUM`), and benefit from **payment idempotency** and **monthly cashback limits**.
 
 ---
 
@@ -66,12 +44,16 @@ FinPay follows the strict **4-layer decoupled software engineering architecture*
 ## ⚙️ Core Financial Rules & Mathematical Specifications
 
 ### 1. Strict Integer-Paise Arithmetic
-To eliminate IEEE 754 floating-point rounding bugs, **all financial calculations, balances, and database columns strictly use integer paise** ($1\text{ INR} = 100\text{ paise}$).
+To eliminate IEEE 754 floating-point rounding bugs, **all financial calculations, balances, and database columns strictly use integer paise** (1 INR = 100 paise).
 
 ### 2. The Deterministic Floor Operation Rule
 Cashback is calculated in paise using the floor operation:
-$$\text{raw\_cashback\_paise} = \left\lfloor \frac{\text{amount\_paise} \times (\text{base\_rate\_bps} \times \text{tier\_rate\_multiplier})}{10000} \right\rfloor$$
-*Example:* A payment of ₹3.33 ($333\text{ paise}$) at the Canteen (2.0%) yields $6.66\text{ paise}$, which is strictly floored to **$6\text{ paise}$** (never rounded up to 7 paise).
+
+```math
+\text{Raw Cashback (paise)} = \left\lfloor \frac{\text{Amount (paise)} \times (\text{Base Rate BPS} \times \text{Tier Multiplier})}{10000} \right\rfloor
+```
+
+* **Example:** A payment of ₹3.33 (333 paise) at the Canteen (2.0% base rate) yields 6.66 paise, which is strictly floored to **6 paise** (never rounded up to 7 paise).
 
 ### 3. Wallet Tiers & Multipliers
 | Tier | Rate Multiplier | Cap Multiplier | Canteen Rate | Canteen Monthly Cap |
@@ -91,8 +73,14 @@ $$\text{raw\_cashback\_paise} = \left\lfloor \frac{\text{amount\_paise} \times (
 | 💳 **Top-up** | 0.0% (0 bps) | No cashback | — |
 
 ### 5. Monthly Cap Enforcement
-$$\text{remaining\_cap} = \max(0, \text{tier\_monthly\_cap} - \text{accumulated\_monthly\_cashback})$$
-$$\text{cashback\_awarded} = \min(\text{raw\_cashback}, \text{remaining\_cap})$$
+```math
+\text{Remaining Cap} = \max(0, \text{Monthly Tier Cap} - \text{Accumulated Monthly Cashback})
+```
+
+```math
+\text{Cashback Awarded} = \min(\text{Raw Cashback}, \text{Remaining Cap})
+```
+
 When a student reaches their monthly cap in a category, subsequent payments award **₹0.00 cashback** until the calendar month resets.
 
 ### 6. Payment Idempotency Protection
@@ -100,6 +88,19 @@ Every payment request includes a unique `idempotency_key` (UUID). If a network t
 - The system returns the cached transaction response.
 - **Zero double-debit** occurs.
 - The response sets `"is_idempotent_replay": true`.
+
+---
+
+## 👥 Pre-Seeded Accounts
+
+| Name | Role | Tier | Email | Password | Initial Balance |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **Rahul Sharma** | Student | `BASIC` | `rahul@campus.edu` | `password123` | ₹1,000.00 |
+| **Priya Patel** | Student | `PRIME` | `priya@campus.edu` | `password123` | ₹2,500.00 |
+| **Amit Verma** | Student | `PREMIUM`| `amit@campus.edu` | `password123` | ₹5,000.00 |
+| **Auditor Admin** | Auditor | `ADMIN` | `admin@campus.edu` | `adminpassword` | — |
+
+*Note: You can also create brand-new students with custom balances at any time using the **`+ Add Person`** button in the UI header!*
 
 ---
 
@@ -139,7 +140,7 @@ Open your browser to:
 
 ## 🧪 Running the Test Suite
 
-Run the full automated test suite verifying all 10 specification edge cases:
+Run the automated test suite verifying all 10 specification edge cases:
 ```bash
 python -m pytest finpay/backend/tests -v
 ```
@@ -148,10 +149,10 @@ python -m pytest finpay/backend/tests -v
 ============================= test session starts =============================
 finpay/backend/tests/test_cashback.py::test_rahul_scenario_example PASSED [ 10%]
 finpay/backend/tests/test_cashback.py::test_floor_operation_rule PASSED  [ 20%]
-finpay/backend/tests/test_cashback.py::test_wallet_tiers_multipliers PASSED [ 30%]
-finpay/backend/tests/test_cashback.py::test_all_merchant_categories_basic PASSED [ 40%]
-finpay/backend/tests/test_cashback.py::test_monthly_cap_multiplier PASSED [ 50%]
-finpay/backend/tests/test_cashback.py::test_zero_and_negative_amounts PASSED [ 60%]
+finpay/backend/tests/test_wallet_tiers_multipliers PASSED [ 30%]
+finpay/backend/tests/test_all_merchant_categories_basic PASSED [ 40%]
+finpay/backend/tests/test_monthly_cap_multiplier PASSED [ 50%]
+finpay/backend/tests/test_zero_and_negative_amounts PASSED [ 60%]
 finpay/backend/tests/test_payment.py::test_rahul_payment_and_cashback PASSED [ 70%]
 finpay/backend/tests/test_payment.py::test_idempotency_safety PASSED     [ 80%]
 finpay/backend/tests/test_payment.py::test_monthly_cap_clamping PASSED   [ 90%]
@@ -161,16 +162,25 @@ finpay/backend/tests/test_reconciliation.py::test_monthly_reconciliation_accurac
 
 ---
 
-## 👥 Pre-Seeded Accounts
+## 📸 Screenshots Showcase
 
-| Name | Role | Tier | Email | Password | Initial Balance |
-| :--- | :--- | :--- | :--- | :--- | :--- |
-| **Rahul Sharma** | Student | `BASIC` | `rahul@campus.edu` | `password123` | ₹1,000.00 |
-| **Priya Patel** | Student | `PRIME` | `priya@campus.edu` | `password123` | ₹2,500.00 |
-| **Amit Verma** | Student | `PREMIUM`| `amit@campus.edu` | `password123` | ₹5,000.00 |
-| **Auditor Admin** | Auditor | `ADMIN` | `admin@campus.edu` | `adminpassword` | — |
+### 1. Student Wallet Dashboard & Live Payment Portal
+![Student Dashboard](docs/screenshots/dashboard.png)
 
-*Note: You can also create brand-new students with custom balances at any time using the **`+ Add Person`** button in the header!*
+### 2. Real-Time Monthly Category Cashback Limits
+![Monthly Cashback Limits](docs/screenshots/monthly_caps.png)
+
+### 3. Merchant Point-of-Sale Terminal
+![Merchant Terminal](docs/screenshots/merchant_terminal.png)
+
+### 4. Monthly Reconciliation & Balance Integrity Ledger
+![Reconciliation Dashboard](docs/screenshots/reconciliation.png)
+
+### 5. Interactive Specification Test Runner
+![Test Runner](docs/screenshots/test_runner.png)
+
+### 6. Interactive Swagger API Documentation
+![API Docs](docs/screenshots/api_docs.png)
 
 ---
 
