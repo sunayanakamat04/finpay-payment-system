@@ -14,7 +14,7 @@
 
 ## 🏛️ System Architecture
 
-FinPay follows the strict **4-layer decoupled software engineering architecture**:
+FinPay strictly adheres to the **4-layer decoupled software engineering architecture**:
 
 ```
 ┌────────────────────────────────────────────────────────┐
@@ -40,21 +40,28 @@ FinPay follows the strict **4-layer decoupled software engineering architecture*
 └────────────────────────────────────────────────────────┘
 ```
 
+### Architectural Layer Responsibilities
+* **Router Layer** (`app/routers/`): Handles HTTP routing, Swagger docs, JWT authorization, and WebSocket connections.
+* **Service Layer** (`app/services/`): Implements pure domain calculations (`calculate_cashback`), payment orchestration (`process_payment`), monthly limit clamping, and ledger reconciliation.
+* **Repository Layer** (`app/repositories/`): Isolates database transactions and queries away from business logic.
+* **Model Layer** (`app/models/`): Defines normalized relational models using strictly integer-paise for monetary columns.
+
 ---
 
 ## ⚙️ Core Financial Rules & Mathematical Specifications
 
 ### 1. Strict Integer-Paise Arithmetic
-To eliminate IEEE 754 floating-point rounding bugs, **all financial calculations, balances, and database columns strictly use integer paise** (1 INR = 100 paise).
+To eliminate IEEE 754 floating-point rounding bugs, **all financial calculations, balances, and database columns strictly use integer paise** (1 INR = 100 paise). Floating-point currency storage is strictly prohibited.
 
 ### 2. The Deterministic Floor Operation Rule
-Cashback is calculated in paise using the floor operation:
+Cashback is calculated in paise using the floor operation rather than rounding:
 
-```math
-\text{Raw Cashback (paise)} = \left\lfloor \frac{\text{Amount (paise)} \times (\text{Base Rate BPS} \times \text{Tier Multiplier})}{10000} \right\rfloor
+```python
+# Pure service calculation (Zero floating-point rounding errors)
+raw_cashback_paise = math.floor((amount_paise * (base_rate_bps * tier_multiplier)) / 10000)
 ```
 
-* **Example:** A payment of ₹3.33 (333 paise) at the Canteen (2.0% base rate) yields 6.66 paise, which is strictly floored to **6 paise** (never rounded up to 7 paise).
+* **Lab Example:** A payment of ₹3.33 (333 paise) at the Canteen (2.0% base rate) yields 6.66 paise, which is strictly floored to **6 paise** (never rounded up to 7 paise).
 
 ### 3. Wallet Tiers & Multipliers
 | Tier | Rate Multiplier | Cap Multiplier | Canteen Rate | Canteen Monthly Cap |
@@ -74,18 +81,18 @@ Cashback is calculated in paise using the floor operation:
 | 💳 **Top-up** | 0.0% (0 bps) | No cashback | — |
 
 ### 5. Monthly Cap Enforcement
-```math
-\text{Remaining Cap} = \max(0, \text{Monthly Tier Cap} - \text{Accumulated Monthly Cashback})
+The system tracks the accumulated cashback earned by a student in each category during the current calendar month:
+
+```python
+# Monthly Cap Saturation Logic:
+remaining_cap_paise = max(0, tier_monthly_cap_paise - accumulated_monthly_cashback_paise)
+cashback_awarded_paise = min(raw_cashback_paise, remaining_cap_paise)
 ```
 
-```math
-\text{Cashback Awarded} = \min(\text{Raw Cashback}, \text{Remaining Cap})
-```
-
-When a student reaches their monthly cap in a category, subsequent payments award **₹0.00 cashback** until the calendar month resets.
+When a student reaches their monthly cap in a category, subsequent payments award **₹0.00 cashback** until the 1st of the next month.
 
 ### 6. Payment Idempotency Protection
-Every payment request includes a unique `idempotency_key` (UUID). If a network timeout or accidental double-click replays the same key:
+Every payment request includes a unique client-generated `idempotency_key` (UUID). If a network timeout or accidental double-click replays the same key:
 - The system returns the cached transaction response.
 - **Zero double-debit** occurs.
 - The response sets `"is_idempotent_replay": true`.
@@ -149,7 +156,7 @@ python -m pytest finpay/backend/tests -v
 ```
 ============================= test session starts =============================
 finpay/backend/tests/test_cashback.py::test_rahul_scenario_example PASSED [ 10%]
-finpay/backend/tests/test_cashback.py::test_floor_operation_rule PASSED  [ 20%]
+finpay/backend/tests/test_floor_operation_rule PASSED  [ 20%]
 finpay/backend/tests/test_wallet_tiers_multipliers PASSED [ 30%]
 finpay/backend/tests/test_all_merchant_categories_basic PASSED [ 40%]
 finpay/backend/tests/test_monthly_cap_multiplier PASSED [ 50%]
