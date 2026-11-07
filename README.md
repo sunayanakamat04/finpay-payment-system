@@ -6,6 +6,7 @@
 [![WebSockets](https://img.shields.io/badge/WebSockets-Real--time-2563EB.svg)](https://websockets.readthedocs.io/)
 [![TailwindCSS](https://img.shields.io/badge/TailwindCSS-v3.4-38B2AC.svg)](https://tailwindcss.com/)
 [![Pytest](https://img.shields.io/badge/Tests-10%2F10%20Passing-success.svg)](https://docs.pytest.org/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 **FinPay** is a campus digital payment and wallet web application. Students make real-time payments across campus merchants (Canteen, Stationery, Transit, Hostel, and Online), earn automated cashback calculated strictly using **integer-paise deterministic floor arithmetic**, enjoy wallet tier multipliers (`BASIC`, `PRIME`, `PREMIUM`), and benefit from **payment idempotency** and **monthly cashback limits**.
 
@@ -185,4 +186,10 @@ finpay/backend/tests/test_reconciliation.py::test_monthly_reconciliation_accurac
 ---
 
 ## 📄 License
-MIT License. Built for Campus Digital Payment Engineering.
+
+Distributed under the **MIT License**. See [`LICENSE`](LICENSE) for full details and permissions.
+
+```text
+Copyright (c) 2026 Sunayana Kamat
+FinPay — Campus Digital Wallet & Real-Time Cashback System
+```
